@@ -60,7 +60,7 @@ The tool print a json ouput that provides the following information:
 
 ## 🛠️ Work in progress
 
-The struct used for parsing the packet content need to be checked in order to overcome a couple of assuntion in the packet structure itself.
+The struct used for parsing the packet content need to be checked in order to overcome a couple of assumption in the packet structure itself.
 The project will be translated in python and will be enriched with additional features, so it can be considered outdated.
 
 🔒 Legal Disclaimer
