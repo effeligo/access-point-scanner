@@ -1,4 +1,4 @@
-# 📡 WiFi Beacon & Data Packet Analyzer
+# 📡 CAPS - Access Point Scanner
 
 A low-level C-based network scanner designed to monitor and analyze **IEEE 802.11 wireless traffic**, with a special focus on:
 
