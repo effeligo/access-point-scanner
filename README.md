@@ -29,6 +29,7 @@ A low-level C-based network scanner designed to monitor and analyze **IEEE 802.1
 ## 📦 Dependencies
 
 - `libpcap` – Packet capture library (install via `sudo pacman -Sy libpcap` on Arch-based systems)
+- [cJSON](https://github.com/DaveGamble/cJSON) - Ultralightweight JSON parser in ANSI  
 - Root privileges for interface monitoring mode
 - Linux-based system with a Wi-Fi interface supporting monitor mode
 
@@ -57,10 +58,22 @@ The tool print a json ouput that provides the following information:
 #   {}
 #}
 ```
+## 📋 Usage
+
+You will need to compile the project using the provided Makefile. 
+After that it can be executed with a couple of simple command line option as showed in the following example (always remember to put the interface that will be used for the packet capture in 'monitor mode'):
+
+```
+make
+sudo ./sonda -i <interface_name> -v
+```
+
+
 
 ## 🛠️ Work in progress
 
 The struct used for parsing the packet content need to be checked in order to overcome a couple of assumption in the packet structure itself.
+The library cJSON version used to build the output is very old, so the tool need to be aligned with the recent release. 
 The project will be translated in python and will be enriched with additional features, so it can be considered outdated.
 
 ## 🔒 Legal Disclaimer
