@@ -32,7 +32,7 @@
 #define DEFAULT_SNAPLEN 500
 #define DEFAULT_TIMEOUT 0
 #define DEFAULT_PROMISC 1
-#define EXECUTION_TIME 1        /* Tempo di esecuzione sul generico canale */
+#define EXECUTION_TIME 5        /* Tempo di esecuzione sul generico canale */
 #define DATALINK_TYPE 127       /* Intestazione del livello link nota  */
 #define CLEAN_TIMEOUT 20        /* Timeout per il controllo della consistenza della struttura */
 
@@ -108,7 +108,6 @@ const __s32 frequencies[13] = {
  * e che dunque aggiorna la struttura utilizzata per mantenere l'informazione.
  */
 void _worker(const struct pcap_pkthdr *h, const u_char *bytes, int verbose){
-
   radiotap_hdr *rd_hdr = (radiotap_hdr *) bytes;
   beacon_info *bcn = (beacon_info *) (bytes + rd_hdr->header_length);
   data_info *data = (data_info *) (bytes + rd_hdr->header_length);
@@ -137,51 +136,46 @@ void _worker(const struct pcap_pkthdr *h, const u_char *bytes, int verbose){
   }
 }
 
+void _callback(pcap_t *handle, int max_time, int verbose) {
+    fd_set set;
+    struct timeval timeout, begin, end;
+    int fd, sel;
+    const u_char *bytes;
+    struct pcap_pkthdr pkthdr;
+    double diff;
 
-void _callback(pcap_t * handle, int max_time, int verbose){
-
-  fd_set set;
-  struct timeval timeout,
-    begin,
-    end;
-  int fd,
-    execution_time = EXECUTION_TIME,
-    done = 0,
-    sel;
-  const u_char *bytes;
-  struct pcap_pkthdr pkthdr;
-  double diff;
-  
-  if ((fd = pcap_get_selectable_fd(handle)) == -1){
-    printf("sonda: errore recupero file descriptor per la cattura\n");
-    exit(EXIT_FAILURE);
-  }
-  
-  timeout.tv_sec = max_time;
-  timeout.tv_usec = 0;
-  
-  FD_CLR(fd, &set);
-  FD_SET(fd, &set);
-
-  IFERRORM1(gettimeofday(&begin, NULL));
-
-  /* Implementazione del timeout di cattura per consentire il cambio di frequenza */
-  while(!done){
-    IFERRORM1((sel = select(fd + 1, &set, NULL, NULL, &timeout)));
-    if ((bytes = pcap_next(handle, &pkthdr)) == NULL){
-      printf("sonda: errore lettura pacchetti\n");
-      exit(EXIT_FAILURE);
+    if ((fd = pcap_get_selectable_fd(handle)) == -1) {
+        printf("sonda: errore recupero file descriptor per la cattura\n");
+        exit(EXIT_FAILURE);
     }
-    /* Pacchetto catturato, eseguo procedura "worker" per analizzarlo */
-    if (sel != 0)
-      _worker(&pkthdr, bytes, verbose);
 
-    IFERRORM1(gettimeofday(&end, NULL));
-    diff = difftime(end.tv_sec, begin.tv_sec);
-    if (diff >= execution_time)
-      done++;
-  }
-  
+    gettimeofday(&begin, NULL);
+
+    while (1) {
+        FD_ZERO(&set);
+        FD_SET(fd, &set);
+        timeout.tv_sec = max_time;
+        timeout.tv_usec = 0;
+
+        sel = select(fd + 1, &set, NULL, NULL, &timeout);
+        IFERRORM1(sel);
+
+        if (sel == 0) {
+            break;
+        }
+
+        if ((bytes = pcap_next(handle, &pkthdr)) == NULL) {
+            printf("sonda: errore lettura pacchetti\n");
+            exit(EXIT_FAILURE);
+        }
+        _worker(&pkthdr, bytes, verbose);
+
+        gettimeofday(&end, NULL);
+        diff = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / 1e6;
+
+        if (diff >= max_time)
+            break;
+    }
 }
 
 /* Stampa risultato della cattura in formato JSON, libera la 
@@ -263,14 +257,13 @@ int main(int argc, char **argv){
   /* Preparazione richiesta cambio frequenza  */
   IFERRORM1((sockfd = socket(PF_INET, SOCK_DGRAM, 0)));
   strcpy(iwr.ifr_ifrn.ifrn_name, device);  
-  
+
   while(1){
     iwr.u.freq.m = *(frequencies + index);
     iwr.u.freq.e = 6;
     /* Set frequenza scheda di rete */
     IFERRORM1(ioctl(sockfd, SIOCSIWFREQ, &iwr));
-    
-    _callback(handle, execution_time, verbose);
+    // _callback(handle, execution_time, verbose);
 
     index++;
     if (index == 13){
