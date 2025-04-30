@@ -63,6 +63,6 @@ The tool print a json ouput that provides the following information:
 The struct used for parsing the packet content need to be checked in order to overcome a couple of assumption in the packet structure itself.
 The project will be translated in python and will be enriched with additional features, so it can be considered outdated.
 
-🔒 Legal Disclaimer
+## 🔒 Legal Disclaimer
 
 This tool is intended for educational and security research purposes only. Use it only on networks you own or have explicit permission to analyze.
