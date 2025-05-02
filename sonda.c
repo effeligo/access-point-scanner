@@ -278,7 +278,7 @@ int main(int argc, char **argv){
     iwr.u.freq.e = 6;
     /* Set frequenza scheda di rete */
     IFERRORM1(ioctl(sockfd, SIOCSIWFREQ, &iwr));
-    // _callback(handle, execution_time, verbose);
+    _callback(handle, execution_time, verbose);
 
     index++;
     if (index == 13){
